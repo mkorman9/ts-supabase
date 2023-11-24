@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 DB_PORT="5432"
+DB_SCHEMA="private"
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -29,6 +30,11 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
+    -s|--schema)
+      DB_SCHEMA="$2"
+      shift
+      shift
+      ;;
   esac
 done
 
@@ -37,7 +43,6 @@ if [ -z "$DB_HOST" ] || [ -z "$DB_PORT" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER
   exit 1
 fi
 
-# Run migration
 docker run \
   -it \
   --rm \
@@ -46,22 +51,5 @@ docker run \
   -url="jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}" \
   -user="${DB_USER}" \
   -password="${DB_PASSWORD}" \
+  -defaultSchema="${DB_SCHEMA}" \
   migrate
-
-# Make sure flyway_schema_history has row level security enabled
-read -r -d '' ENABLE_RLS_QUERY << EOF
-  alter table flyway_schema_history enable row level security;
-  create policy flyway_schema_history_deny_anon on flyway_schema_history for ALL to anon using (false);
-  create policy flyway_schema_history_deny_auth on flyway_schema_history for ALL to authenticated using (false);
-EOF
-
-docker run \
-  -it \
-  --rm \
-  -e PGPASSWORD="${DB_PASSWORD}" \
-  postgres:15 \
-    psql \
-    -h "${DB_HOST}" \
-    -U "${DB_USER}" \
-    "${DB_NAME}" \
-    -c "${ENABLE_RLS_QUERY}" &> /dev/null || true
