@@ -1,6 +1,7 @@
 import './hooks';
 import config from './config';
 
+import {randomBytes} from 'crypto';
 import {createClient} from '@supabase/supabase-js';
 import pg from 'pg';
 
@@ -38,4 +39,30 @@ const dbPool = new pg.Pool({
   rows.rows.forEach(r => console.log(r));
 
   conn.release();
+})();
+
+// Create fake user and validate token
+(async () => {
+  const {data: signUpData, error: signUpError} = await supabase.auth.signUp({
+    email: `anonymous-${randomBytes(16).toString('hex')}@playground.supabase.co`,
+    password: randomBytes(32).toString('hex')
+  });
+  if (signUpError) {
+    console.log(`Failed to create user: ${signUpError}`);
+    return;
+  }
+
+  const token = signUpData.session?.access_token;
+  if (!token) {
+    console.log('Missing user session');
+    return;
+  }
+
+  const {data: authData, error: authError} = await supabase.auth.getUser(token);
+  if (authError) {
+    console.log(`Failed to validate user token: ${authError}`);
+    return;
+  }
+
+  console.log(`User ${authData.user?.id} authorized successfully`);
 })();
