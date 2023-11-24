@@ -13,25 +13,27 @@ const db = new pg.Client({
   password: config.DB_PASSWORD
 });
 
-// (async () => {
-//   const {data, error} =
-//     await supabase.from('todo_items')
-//       .select();
-//
-//   if (error) {
-//     console.log(`Failed to query data through the API: ${error}`);
-//     return;
-//   }
-//
-//   console.log(`Data from API:`);
-//   data?.forEach(d => console.log(d));
-// })();
+// Query data from public schema using API
+(async () => {
+  const {data, error} =
+    await supabase.from('todo_items')
+      .select();
 
+  if (error) {
+    console.log(`Failed to query data through the API: ${error}`);
+    return;
+  }
+
+  console.log(`TODO Items:`);
+  data?.forEach(d => console.log(d));
+})();
+
+// Query data from private schema using database connection
 (async () => {
   await db.connect();
-  const rows = await db.query('SELECT id, content from private.todo_items');
+  const rows = await db.query('SELECT id, username from private.users');
 
-  console.log('Data from the DB:');
+  console.log('Users:');
   rows.rows.forEach(r => console.log(r));
 
   await db.end();
