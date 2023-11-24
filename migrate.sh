@@ -37,6 +37,7 @@ if [ -z "$DB_HOST" ] || [ -z "$DB_PORT" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER
   exit 1
 fi
 
+# Run migration
 docker run \
   -it \
   --rm \
@@ -46,3 +47,20 @@ docker run \
   -user="${DB_USER}" \
   -password="${DB_PASSWORD}" \
   migrate
+
+# Make sure flyway_schema_history has row level security enabled
+read -r -d '' ENABLE_RLS_QUERY << EOF
+  alter table flyway_schema_history enable row level security;
+  create policy flyway_schema_history_policy on flyway_schema_history for ALL to anon using (false);
+EOF
+
+docker run \
+  -it \
+  --rm \
+  -e PGPASSWORD="${DB_PASSWORD}" \
+  postgres:15 \
+    psql \
+    -h "${DB_HOST}" \
+    -U "${DB_USER}" \
+    "${DB_NAME}" \
+    -c "${ENABLE_RLS_QUERY}" &> /dev/null || true
