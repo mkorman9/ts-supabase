@@ -25,8 +25,7 @@ const dbPool = new pg.Pool({
     return;
   }
 
-  console.log(`TODO Items:`);
-  result.data?.forEach(d => console.log(d));
+  console.log(`TODO Items: [${result.data?.map(d => d.content)}]`);
 })();
 
 // Query data from private schema using database connection
@@ -34,8 +33,7 @@ const dbPool = new pg.Pool({
   const conn = await dbPool.connect();
   const rows = await conn.query('SELECT id, username from private.users');
 
-  console.log('Users:');
-  rows.rows.forEach(r => console.log(r));
+  console.log(`Users: [${rows.rows.map(r => r.username)}]`);
 
   conn.release();
 })();
