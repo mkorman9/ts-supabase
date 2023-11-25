@@ -17,17 +17,16 @@ const dbPool = new pg.Pool({
 
 // Query data from public schema using API
 (async () => {
-  const {data, error} =
-    await supabase.from('todo_items')
-      .select();
+  const result = await supabase.from('todo_items')
+    .select();
 
-  if (error) {
-    console.log(`Failed to query data through the API: ${error}`);
+  if (result.error) {
+    console.log(`Failed to query data through the API: ${result.error}`);
     return;
   }
 
   console.log(`TODO Items:`);
-  data?.forEach(d => console.log(d));
+  result.data?.forEach(d => console.log(d));
 })();
 
 // Query data from private schema using database connection
@@ -43,26 +42,26 @@ const dbPool = new pg.Pool({
 
 // Create fake user and validate token
 (async () => {
-  const {data: signUpData, error: signUpError} = await supabase.auth.signUp({
+  const signUpResult = await supabase.auth.signUp({
     email: `anonymous-${randomBytes(16).toString('hex')}@playground.supabase.co`,
     password: randomBytes(32).toString('hex')
   });
-  if (signUpError) {
-    console.log(`Failed to create user: ${signUpError}`);
+  if (signUpResult.error) {
+    console.log(`Failed to create user: ${signUpResult.error}`);
     return;
   }
 
-  const token = signUpData.session?.access_token;
+  const token = signUpResult.data.session?.access_token;
   if (!token) {
     console.log('Missing user session');
     return;
   }
 
-  const {data: authData, error: authError} = await supabase.auth.getUser(token);
-  if (authError) {
-    console.log(`Failed to validate user token: ${authError}`);
+  const authResult = await supabase.auth.getUser(token);
+  if (authResult.error) {
+    console.log(`Failed to validate user token: ${authResult.error}`);
     return;
   }
 
-  console.log(`User ${authData.user?.id} authorized successfully`);
+  console.log(`User ${authResult.data.user?.id} authorized successfully`);
 })();
