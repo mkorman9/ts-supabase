@@ -1,15 +1,19 @@
 import 'dotenv/config';
 import {z} from 'zod';
 
-const ConfigSchema = z.object({
-  SUPABASE_URL: z.string(),
-  SUPABASE_TOKEN: z.string(),
+const str = () => z.string();
+const bool = () => z.string().transform(v => ['true', '1'].includes(v.toLowerCase()));
+const int = () => z.preprocess(Number, z.number().int());
 
-  DB_HOST: z.string(),
-  DB_PORT: z.preprocess(Number, z.number().int()),
-  DB_NAME: z.string(),
-  DB_USER: z.string(),
-  DB_PASSWORD: z.string()
+const ConfigSchema = z.object({
+  SUPABASE_URL: str(),
+  SUPABASE_TOKEN: str(),
+
+  DB_HOST: str(),
+  DB_PORT: int(),
+  DB_NAME: str(),
+  DB_USER: str(),
+  DB_PASSWORD: str()
 });
 
 export default (() => {
